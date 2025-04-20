@@ -1,36 +1,19 @@
-from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.serializers import ModelSerializer
-from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
-
-User = get_user_model()  # 👈 Esto es lo importante
-
-# --- Registro ---
-class RegisterSerializer(ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'password', 'email')
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+from rest_framework import generics, viewsets
+from rest_framework.permissions import IsAuthenticated
+from .models import Usuario, Grupo
+from .serializers import RegisterSerializer, GrupoSerializer, PermisoSerializer
+from django.contrib.auth.models import Permission
 
 class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
+    queryset = Usuario.objects.all()
     serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
 
-
-# --- Vista protegida (requiere autenticación JWT) ---
-class ProtectedView(APIView):
+class GrupoViewSet(viewsets.ModelViewSet):
+    queryset = Grupo.objects.all()
+    serializer_class = GrupoSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        return Response({
-            "message": f"Hola {request.user.username}, estás autenticado correctamente."
-        })
-
+class PermisoViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Permission.objects.all()
+    serializer_class = PermisoSerializer
+    permission_classes = [IsAuthenticated]
